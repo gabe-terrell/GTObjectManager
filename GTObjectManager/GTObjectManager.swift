@@ -30,17 +30,18 @@ protocol GTManagedObjectIdentifiable {
 
 // MARK: - GTObjectManager API
 class GTObjectManager {
-    
-    /** 
-     Returns the singleton app's managedObjectContext
+    /**
+     Returns a new instance of the NSManagedObject type specified
      */
-    static func fetchManagedObjectContext() -> NSManagedObjectContext? {
-        if let appDelegate = UIApplication.sharedApplication().delegate as? GTCoreDataIdentifiable {
-            return appDelegate.managedObjectContext
+    static func createObjectOfType <T where T: NSManagedObject, T: GTManagedObjectIdentifiable> (type: T.Type) -> T? {
+        if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
+            let entityName = type.managedObjectEntityName()
+            if let entity = NSEntityDescription.entityForName(entityName, inManagedObjectContext: managedObjectContext) {
+                let managedObject = NSManagedObject(entity: entity, insertIntoManagedObjectContext: managedObjectContext)
+                return managedObject as? T
+            }
         }
-        else {
-            return nil
-        }
+        return nil
     }
     
     /**
@@ -63,11 +64,10 @@ class GTObjectManager {
      Returns the number of results of an NSFetchRequest for the NSManagedObject type specified
      */
     static func countAllObjectsOfType <T where T: NSManagedObject, T: GTManagedObjectIdentifiable>
-        (type: T.Type, predicate: NSPredicate? = nil, sortDescriptors: [NSSortDescriptor]? = nil) -> Int {
+        (type: T.Type, predicate: NSPredicate? = nil) -> Int {
         if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
             let fetchRequest = NSFetchRequest(entityName: type.managedObjectEntityName())
             fetchRequest.predicate = predicate
-            fetchRequest.sortDescriptors = sortDescriptors
             fetchRequest.includesSubentities = false
             var error: NSError? = nil
             let count = managedObjectContext.countForFetchRequest(fetchRequest, error: &error)
@@ -76,36 +76,6 @@ class GTObjectManager {
             }
         }
         return -1
-    }
-    
-    /**
-     Returns a new instance of the NSManagedObject type specified
-     */
-    static func createObjectOfType <T where T: NSManagedObject, T: GTManagedObjectIdentifiable> (type: T.Type) -> T? {
-        if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
-            let entityName = type.managedObjectEntityName()
-            if let entity = NSEntityDescription.entityForName(entityName, inManagedObjectContext: managedObjectContext) {
-                let managedObject = NSManagedObject(entity: entity, insertIntoManagedObjectContext: managedObjectContext)
-                return managedObject as? T
-            }
-        }
-        return nil
-    }
-    
-    /**
-     Saves all changes to the singleton app's managedObjectContext
-     */
-    static func saveAllChanges() -> Bool {
-        if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
-            do {
-                try managedObjectContext.save()
-                return true
-            } catch let error as NSError {
-                print("Could not save \(error), \(error.userInfo)")
-                return false
-            }
-        }
-        return false
     }
     
     /**
@@ -137,11 +107,32 @@ class GTObjectManager {
         }
         return false
     }
+    
+    /**
+     Saves all changes to the singleton app's managedObjectContext
+     */
+    static func saveAllChanges() -> Bool {
+        if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
+            do {
+                try managedObjectContext.save()
+                return true
+            } catch let error as NSError {
+                print("Could not save \(error), \(error.userInfo)")
+                return false
+            }
+        }
+        return false
+    }
+    
+    /**
+     Returns the singleton app's managedObjectContext
+     */
+    private static func fetchManagedObjectContext() -> NSManagedObjectContext? {
+        if let appDelegate = UIApplication.sharedApplication().delegate as? GTCoreDataIdentifiable {
+            return appDelegate.managedObjectContext
+        }
+        else {
+            return nil
+        }
+    }
 }
-
-
-
-
-
-
-

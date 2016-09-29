@@ -15,8 +15,18 @@ let contact = GTObjectManager.createObjectOfType(Contact)
 // returns an array containing all Contact NSManagedObject entities
 let allContacts = GTObjectManager.fetchAllObjectsOfType(Contact.self)
 
-// returns an array containing a sorted, filtered set of Contacts entities matching the passed predicate
+// returns an array containing a sorted, filtered set of Contact entities matching the passed predicate
 let searchResults = GTObjectManager.fetchAllObjectsOfType(Contact.self, predicate: compoundPredicate, sortDescriptors: sortDescriptors)
+```
+
+### Count
+```Swift
+// returns the number of all Contact NSManagedObject entities
+// this is faster and more memory efficient if all you need is the count
+let contactCount = GTObjectManager.countAllObjectsOfType(Contact.self)
+
+// returns the number of Contact entities matching the passed predicate
+let searchResultCount = GTObjectManager.countAllObjectsOfType(Contact.self, predicate: compoundPredicate)
 ```
 
 ### Delete

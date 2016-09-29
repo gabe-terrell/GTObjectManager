@@ -30,54 +30,6 @@ protocol GTManagedObjectIdentifiable {
 
 // MARK: - GTObjectManager API
 class GTObjectManager {
-    
-    /** 
-     Returns the singleton app's managedObjectContext
-     */
-    static func fetchManagedObjectContext() -> NSManagedObjectContext? {
-        if let appDelegate = UIApplication.sharedApplication().delegate as? GTCoreDataIdentifiable {
-            return appDelegate.managedObjectContext
-        }
-        else {
-            return nil
-        }
-    }
-    
-    /**
-     Returns the results of an NSFetchRequest for the NSManagedObject type specified
-     */
-    static func fetchAllObjectsOfType <T where T: NSManagedObject, T: GTManagedObjectIdentifiable>
-        (type: T.Type, predicate: NSPredicate? = nil, sortDescriptors: [NSSortDescriptor]? = nil) -> [T]? {
-
-        guard let managedObjectContext = GTObjectManager.fetchManagedObjectContext() else {
-            return nil
-        }
-        
-        let fetchRequest = NSFetchRequest(entityName: type.managedObjectEntityName())
-        fetchRequest.predicate = predicate
-        fetchRequest.sortDescriptors = sortDescriptors
-        return (try? managedObjectContext.executeFetchRequest(fetchRequest)) as? [T]
-    }
-    
-    /**
-     Returns the number of results of an NSFetchRequest for the NSManagedObject type specified
-     */
-    static func countAllObjectsOfType <T where T: NSManagedObject, T: GTManagedObjectIdentifiable>
-        (type: T.Type, predicate: NSPredicate? = nil, sortDescriptors: [NSSortDescriptor]? = nil) -> Int {
-        if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
-            let fetchRequest = NSFetchRequest(entityName: type.managedObjectEntityName())
-            fetchRequest.predicate = predicate
-            fetchRequest.sortDescriptors = sortDescriptors
-            fetchRequest.includesSubentities = false
-            var error: NSError? = nil
-            let count = managedObjectContext.countForFetchRequest(fetchRequest, error: &error)
-            if error == nil {
-                return count
-            }
-        }
-        return -1
-    }
-    
     /**
      Returns a new instance of the NSManagedObject type specified
      */
@@ -93,19 +45,37 @@ class GTObjectManager {
     }
     
     /**
-     Saves all changes to the singleton app's managedObjectContext
+     Returns the results of an NSFetchRequest for the NSManagedObject type specified
      */
-    static func saveAllChanges() -> Bool {
+    static func fetchAllObjectsOfType <T where T: NSManagedObject, T: GTManagedObjectIdentifiable>
+        (type: T.Type, predicate: NSPredicate? = nil, sortDescriptors: [NSSortDescriptor]? = nil) -> [T]? {
+        
+        guard let managedObjectContext = GTObjectManager.fetchManagedObjectContext() else {
+            return nil
+        }
+        
+        let fetchRequest = NSFetchRequest(entityName: type.managedObjectEntityName())
+        fetchRequest.predicate = predicate
+        fetchRequest.sortDescriptors = sortDescriptors
+        return (try? managedObjectContext.executeFetchRequest(fetchRequest)) as? [T]
+    }
+    
+    /**
+     Returns the number of results of an NSFetchRequest for the NSManagedObject type specified
+     */
+    static func countAllObjectsOfType <T where T: NSManagedObject, T: GTManagedObjectIdentifiable>
+        (type: T.Type, predicate: NSPredicate? = nil) -> Int {
         if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
-            do {
-                try managedObjectContext.save()
-                return true
-            } catch let error as NSError {
-                print("Could not save \(error), \(error.userInfo)")
-                return false
+            let fetchRequest = NSFetchRequest(entityName: type.managedObjectEntityName())
+            fetchRequest.predicate = predicate
+            fetchRequest.includesSubentities = false
+            var error: NSError? = nil
+            let count = managedObjectContext.countForFetchRequest(fetchRequest, error: &error)
+            if error == nil {
+                return count
             }
         }
-        return false
+        return -1
     }
     
     /**
@@ -137,11 +107,32 @@ class GTObjectManager {
         }
         return false
     }
+    
+    /**
+     Saves all changes to the singleton app's managedObjectContext
+     */
+    static func saveAllChanges() -> Bool {
+        if let managedObjectContext = GTObjectManager.fetchManagedObjectContext() {
+            do {
+                try managedObjectContext.save()
+                return true
+            } catch let error as NSError {
+                print("Could not save \(error), \(error.userInfo)")
+                return false
+            }
+        }
+        return false
+    }
+    
+    /**
+     Returns the singleton app's managedObjectContext
+     */
+    private static func fetchManagedObjectContext() -> NSManagedObjectContext? {
+        if let appDelegate = UIApplication.sharedApplication().delegate as? GTCoreDataIdentifiable {
+            return appDelegate.managedObjectContext
+        }
+        else {
+            return nil
+        }
+    }
 }
-
-
-
-
-
-
-
